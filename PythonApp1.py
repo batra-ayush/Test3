@@ -15,8 +15,10 @@ from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
 from tensorflow.keras.preprocessing import image
 from tensorflow.python.saved_model import tag_constants, signature_constants
 from tensorflow.python.framework import convert_to_constants
-print(f"TensorRT version: {get_linked_tensorrt_version()}")
+## print(f"TensorRT version: {get_linked_tensorrt_version()}")
+
 print(f"TensorFlow version: {tf.__version__}")
+
 results = None
 batch_size = 8
 def load_save_resnet50_model(saved_model_dir = 'resnet50_saved_model'):
@@ -92,10 +94,15 @@ iter_times = []
 dataset = get_dataset(batch_size)  
 
 walltime_start = time.time()
-for i, (validation_ds, batch_labels, _) in enumerate(dataset):
-    start_time = time.time()
-    pred_prob_keras = model(validation_ds)
-    iter_times.append(time.time() - start_time)
+
+@tf.function
+def infer(model=model, dataset=dataset):
+	for i, (validation_ds, batch_labels, _) in enumerate(dataset):
+   	 start_time = time.time()
+   	 pred_prob_keras = model(validation_ds)
+   	 iter_times.append(time.time() - start_time)
+
+infer()
     
     actual_labels.extend(label for label_list in batch_labels.numpy() for label in label_list)
     pred_labels.extend(list(np.argmax(pred_prob_keras, axis=1)))
